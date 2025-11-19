@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Size
 
 // 회원가입 요청
 
-data class UserRegisterRequestDto(
+data class UserRegisterRequest(
     @field:NotBlank(message = "아이디는 필수입니다")
     @field:Size(min = 4, max = 20, message = "아이디는 4자 이상 20자 이하여야 합니다")
     val loginId: String?,
@@ -30,7 +30,7 @@ data class UserRegisterRequestDto(
  * (수정) 로그인 요청 DTO
  * 1. email -> loginId
  */
-data class UserLoginRequestDto(
+data class UserLoginRequest(
     @field:NotBlank(message = "아이디를 입력해주세요.")
     val loginId: String?,
 

@@ -1,6 +1,6 @@
 package com.example.demo.domain.place
 
-import com.example.demo.domain.place.dto.PlaceDtoCreateRequest
+import com.example.demo.domain.place.dto.PlaceCreateRequest
 import com.example.demo.domain.place.dto.PlaceDtoResponse
 import com.example.demo.domain.user.dto.ApiResponse
 import jakarta.validation.Valid
@@ -16,7 +16,7 @@ class PlaceController(
 
     // 1. 장소 등록 (POST /api/places)
     @PostMapping
-    fun createPlace(@Valid @RequestBody request: PlaceDtoCreateRequest): ResponseEntity<ApiResponse<PlaceDtoResponse>> {
+    fun createPlace(@Valid @RequestBody request: PlaceCreateRequest): ResponseEntity<ApiResponse<PlaceDtoResponse>> {
         val place = placeService.createPlace(request)
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(ApiResponse(success = true, message = "장소가 등록되었습니다.", data = place))

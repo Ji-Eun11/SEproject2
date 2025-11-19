@@ -1,12 +1,13 @@
 package com.example.demo.domain.pet.dto
 
 import com.example.demo.domain.pet.PetGender
+import com.example.demo.domain.pet.Size
 import java.time.LocalDate
 
 data class PetDtoCreateRequest(
     val name: String,
     val gender: PetGender,
-    val size: String,
+    val size: Size,
     val birthDate: LocalDate? = null,
     val weight: Double? = null,
     val specialNotes: String? = null
@@ -15,7 +16,7 @@ data class PetDtoCreateRequest(
 data class PetDtoUpdateRequest(
     val name: String,
     val gender: PetGender,
-    val size: String,
+    val size: Size,
     val birthDate: LocalDate? = null,
     val weight: Double? = null,
     val specialNotes: String? = null

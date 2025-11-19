@@ -1,6 +1,6 @@
 package com.example.demo.domain.place
 
-import com.example.demo.domain.place.dto.PlaceDtoCreateRequest
+import com.example.demo.domain.place.dto.PlaceCreateRequest
 import com.example.demo.domain.place.dto.PlaceDtoResponse
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
@@ -13,7 +13,7 @@ class PlaceService(
 
     // 1. 장소 등록 (관리자용 기능)
     @Transactional
-    fun createPlace(request: PlaceDtoCreateRequest): PlaceDtoResponse {
+    fun createPlace(request: PlaceCreateRequest): PlaceDtoResponse {
         val place = Place(
             name = request.name,
             address = request.address,
@@ -48,8 +48,8 @@ class PlaceService(
     @Transactional(readOnly = true)
     fun searchPlaces(keyword: String): List<PlaceDtoResponse> {
         // 이름이나 주소에 키워드가 포함된 장소 검색
-        val places = placeRepository.findByNameContaining(keyword)
-            .ifEmpty { placeRepository.findByAddressContaining(keyword) }
+        val places = placeRepository.findByNameContainingIgnoreCase(keyword)
+            .ifEmpty { placeRepository.findByAddressContainingIgnoreCase(keyword) }
 
         return places.map { PlaceDtoResponse.from(it) }
     }

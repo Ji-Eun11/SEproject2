@@ -21,11 +21,11 @@ class PetController(
      */
     @PostMapping("/users/{userId}/pets")
     fun createPet(
-        @PathVariable userId: Long,
+        @PathVariable ownerId: Long,
         @Valid @RequestBody request: PetDtoCreateRequest
     ): ResponseEntity<ApiResponse<PetDtoResponse>> {
 
-        val petResponse = petService.createPet(userId, request)
+        val petResponse = petService.createPet(ownerId, request)
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(ApiResponse(success = true, message = "반려동물이 등록되었습니다.", data = petResponse))
     }
@@ -36,10 +36,10 @@ class PetController(
      */
     @GetMapping("/users/{userId}/pets")
     fun getPetsByUserId(
-        @PathVariable userId: Long
+        @PathVariable ownerId: Long
     ): ResponseEntity<ApiResponse<List<PetDtoResponse>>> {
 
-        val pets = petService.getPetsByUserId(userId)
+        val pets = petService.getPetsByUserId(ownerId)
         return ResponseEntity.ok(ApiResponse(success = true, message = "반려동물 목록 조회 성공.", data = pets))
     }
 
@@ -50,12 +50,12 @@ class PetController(
      */
     @PutMapping("/users/{userId}/pets/{petId}")
     fun updatePet(
-        @PathVariable userId: Long, // (보안상: 나중에 토큰으로 대체)
+        @PathVariable ownerId: Long, // (보안상: 나중에 토큰으로 대체)
         @PathVariable petId: Long,
         @Valid @RequestBody request: PetDtoUpdateRequest
     ): ResponseEntity<ApiResponse<PetDtoResponse>> {
 
-        val updatedPet = petService.updatePet(userId, petId, request)
+        val updatedPet = petService.updatePet(ownerId, petId, request)
         return ResponseEntity.ok(ApiResponse(success = true, message = "반려동물 정보가 수정되었습니다.", data = updatedPet))
     }
 
@@ -66,11 +66,11 @@ class PetController(
      */
     @DeleteMapping("/users/{userId}/pets/{petId}")
     fun deletePet(
-        @PathVariable userId: Long, // (보안상: 나중에 토큰으로 대체)
+        @PathVariable ownerId: Long, // (보안상: 나중에 토큰으로 대체)
         @PathVariable petId: Long
     ): ResponseEntity<ApiResponse<Unit>> { // (데이터가 없으므로 Unit)
 
-        petService.deletePet(userId, petId)
+        petService.deletePet(ownerId, petId)
         return ResponseEntity.ok(ApiResponse(success = true, message = "반려동물 정보가 삭제되었습니다."))
     }
 }

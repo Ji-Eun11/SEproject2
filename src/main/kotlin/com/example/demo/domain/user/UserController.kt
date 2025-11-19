@@ -1,8 +1,7 @@
 package com.example.demo.domain.user
 
-// (수정) import하는 DTO 클래스명 변경
-import com.example.demo.domain.user.dto.UserRegisterRequestDto
-import com.example.demo.domain.user.dto.UserLoginRequestDto
+import com.example.demo.domain.user.dto.UserRegisterRequest
+import com.example.demo.domain.user.dto.UserLoginRequest
 import com.example.demo.domain.user.dto.UserResponse
 import com.example.demo.domain.user.dto.UpdateProfileRequest
 import com.example.demo.domain.user.dto.ChangePasswordRequest
@@ -21,7 +20,7 @@ class UserController(
 ) {
 
     @PostMapping("/signup")
-    fun signUp(@Valid @RequestBody request: UserRegisterRequestDto): ResponseEntity<ApiResponse<UserResponse>> { // (수정) DTO 변경
+    fun signUp(@Valid @RequestBody request: UserRegisterRequest): ResponseEntity<ApiResponse<UserResponse>> { // (수정) DTO 변경
         val user = userService.signUp(request)
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(
@@ -34,8 +33,7 @@ class UserController(
     }
 
     @PostMapping("/login")
-    fun login(@Valid @RequestBody request: UserLoginRequestDto): ResponseEntity<ApiResponse<LoginResponse>> { // (수정) DTO 및 반환 타입 변경
-        // (수정) Service가 예외를 던지므로 try-catch가 필요 없음 (ControllerAdvice에서 처리)
+    fun login(@Valid @RequestBody request: UserLoginRequest): ResponseEntity<ApiResponse<LoginResponse>> { // (수정) DTO 및 반환 타입 변경
         // Service가 LoginResponse를 직접 반환
         val loginResponse = userService.login(request)
 

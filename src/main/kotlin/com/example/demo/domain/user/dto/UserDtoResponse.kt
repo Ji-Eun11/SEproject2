@@ -2,16 +2,17 @@ package com.example.demo.domain.user.dto
 
 import com.example.demo.domain.user.User
 import com.example.demo.domain.user.UserRole
+import com.example.demo.domain.pet.Size
 import java.time.LocalDateTime
 
 data class UserResponse(
     val userId: Long,
-    val loginId: String, // (추가)
+    val loginId: String,
     val email: String,
     val nickname: String,
     val profileImage: String?,
     val role: UserRole,
-    val pets: List<PetProfileDto>, // (추가)
+    val pets: List<PetProfileDto>,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
 ) {
@@ -24,10 +25,9 @@ data class UserResponse(
                 nickname = user.nickname,
                 profileImage = user.profileImage,
                 role = user.role,
-                // (추가) Member Entity의 Pet Entity 목록을 PetProfileDto 목록으로 변환
                 pets = user.pets.map { pet ->
                     PetProfileDto(
-                        petId = pet.id,
+                        petId = pet.petId,
                         name = pet.name,
                         size = pet.size
                     )
@@ -42,13 +42,13 @@ data class UserResponse(
 data class PetProfileDto(
     val petId: Long,
     val name: String,
-    val size: String
+    val size: Size
 )
 
 data class LoginResponse(
     val accessToken: String,
     val refreshToken: String,
-    val user: UserResponse // (수정) UserResponse -> MemberResponse
+    val user: UserResponse
 )
 
 data class ApiResponse<T>(

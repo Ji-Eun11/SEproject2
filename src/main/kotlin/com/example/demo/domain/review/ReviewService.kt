@@ -70,7 +70,7 @@ class ReviewService(
     // 4. 특정 장소의 리뷰 목록 조회
     @Transactional(readOnly = true)
     fun getReviewsByPlace(placeId: Long): List<ReviewDtoResponse> {
-        return reviewRepository.findAllByPlaceIdOrderByCreatedAtDesc(placeId)
+        return reviewRepository.findAllByPlace_PlaceIdOrderByCreatedAtDesc(placeId)
             .map { ReviewDtoResponse.from(it) }
     }
 }

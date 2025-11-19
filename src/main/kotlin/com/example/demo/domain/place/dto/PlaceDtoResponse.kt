@@ -8,7 +8,7 @@ data class PlaceDtoResponse(
     val address: String,
     val phone: String?,
     val operationHours: String?,
-    val petPolicy: String?,
+    val petPolicy: String,
     val avgRating: Double,
     val latitude: Double?,
     val longitude: Double?,

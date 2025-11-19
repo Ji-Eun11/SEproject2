@@ -1,7 +1,7 @@
 package com.example.demo.domain.place.dto
 
 // 1. 장소 등록/수정 주문서
-data class PlaceDtoCreateRequest(
+data class PlaceCreateRequest(
     val name: String,
     val address: String,
     val phone: String? = null,
@@ -12,7 +12,7 @@ data class PlaceDtoCreateRequest(
     val photos: List<String> = emptyList()
 )
 
-data class PlaceDtoUpdateRequest(
+data class PlaceUpdateRequest(
     val name: String,
     val address: String,
     val phone: String? = null,

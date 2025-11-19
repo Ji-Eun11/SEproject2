@@ -32,7 +32,7 @@ class PetService(
             birthDate = request.birthDate,
             weight = request.weight,
             specialNotes = request.specialNotes,
-            owner = owner // ⭐️ 펫의 주인으로 방금 찾은 User를 지정
+            owner = owner // ⭐️ 펫의 주인으로 방금 찾은 user를 지정
         )
 
         // 3. 펫 창고에 저장
@@ -48,7 +48,7 @@ class PetService(
     @Transactional(readOnly = true)
     fun getPetsByUserId(userId: Long): List<PetDtoResponse> {
         // 1. 펫 창고 관리자에게 "이 주인(userId)의 펫 다 찾아줘"
-        val pets = petRepository.findAllByOwnerId(userId)
+        val pets = petRepository.findAllByOwnerUserId(userId)
 
         // 2. 펫 목록을 서빙 쟁반(PetResponse) 목록으로 변환
         return pets.map { pet -> PetDtoResponse.from(pet) }
@@ -61,7 +61,7 @@ class PetService(
     @Transactional
     fun updatePet(userId: Long, petId: Long, request: PetDtoUpdateRequest): PetDtoResponse {
         // 1. "이 펫(petId)의 주인(userId)이 맞는지" 확인하며 펫을 찾음
-        val pet = petRepository.findByIdAndOwnerId(petId, userId)
+        val pet = petRepository.findByPetIdAndOwnerUserId(petId, userId)
             ?: throw IllegalArgumentException("펫이 존재하지 않거나 수정 권한이 없습니다.")
 
         // 2. 펫 정보 수정 (Pet 엔티티의 헬퍼 메서드 사용)
@@ -85,8 +85,8 @@ class PetService(
     @Transactional
     fun deletePet(userId: Long, petId: Long) {
         // 1. "이 펫(petId)의 주인(userId)이 맞는지" 확인하며 펫을 찾음
-        val pet = petRepository.findByIdAndOwnerId(petId, userId)
-            ?: throw IllegalArgumentException("펫이 존재하지 않거나 삭제 권한이 없습니다.")
+        val pet = petRepository.findByPetIdAndOwnerUserId(petId, userId)
+            ?: throw IllegalArgumentException("펫이 존재하지 않습니다.")
 
         // 2. 펫 창고에서 삭제
         petRepository.delete(pet)

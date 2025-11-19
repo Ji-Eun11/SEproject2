@@ -1,7 +1,7 @@
 package com.example.demo.domain.user
 // (수정) import하는 DTO 클래스명 변경
-import com.example.demo.domain.user.dto.UserRegisterRequestDto
-import com.example.demo.domain.user.dto.UserLoginRequestDto
+import com.example.demo.domain.user.dto.UserRegisterRequest
+import com.example.demo.domain.user.dto.UserLoginRequest
 import com.example.demo.domain.user.dto.UserResponse
 import com.example.demo.domain.user.dto.UpdateProfileRequest
 import com.example.demo.domain.user.dto.ChangePasswordRequest
@@ -19,7 +19,7 @@ class UserService(
 ) {
 
     @Transactional
-    fun signUp(request: UserRegisterRequestDto): UserResponse { // (수정) DTO 변경
+    fun signUp(request: UserRegisterRequest): UserResponse { // (수정) DTO 변경
         // (추가) 아이디 중복 체크
         if (userRepository.existsByLoginId(request.loginId!!)) {
             throw IllegalArgumentException("이미 사용 중인 아이디입니다")
@@ -47,7 +47,7 @@ class UserService(
     }
 
     // (수정) 반환 타입을 Boolean -> LoginResponse (실제 토큰 반환)
-    fun login(request: UserLoginRequestDto): LoginResponse { // (수정) DTO 및 반환 타입 변경
+    fun login(request: UserLoginRequest): LoginResponse { // (수정) DTO 및 반환 타입 변경
         // (수정) 이메일이 아닌 loginId로 사용자 조회
         val user = userRepository.findByLoginId(request.loginId!!)
             ?: throw IllegalArgumentException("존재하지 않는 사용자입니다")
@@ -82,15 +82,14 @@ class UserService(
         val user = userRepository.findById(userId).orElseThrow {
             IllegalArgumentException("존재하지 않는 사용자입니다")
         }
-        return UserResponse.from(user) // (수정) MemberResponse -> UserResponse
+        return UserResponse.from(user)
     }
 
-    // (참고) getUserByEmail은 로그인 외에 다른 용도로 필요할 수 있으므로 유지
     @Transactional(readOnly = true)
     fun getUserByEmail(email: String): UserResponse {
         val user = userRepository.findByEmail(email)
             ?: throw IllegalArgumentException("존재하지 않는 사용자입니다")
-        return UserResponse.from(user) // (수정) MemberResponse -> UserResponse
+        return UserResponse.from(user)
     }
 
     @Transactional
@@ -104,7 +103,7 @@ class UserService(
             profileImage = request.profileImage
         )
 
-        return UserResponse.from(user) // (수정) MemberResponse -> UserResponse
+        return UserResponse.from(user)
     }
 
     @Transactional
@@ -134,6 +133,6 @@ class UserService(
     @Transactional(readOnly = true)
     fun getAllUsers(): List<UserResponse> {
         return userRepository.findAll()
-            .map { UserResponse.from(it) } // (수정) MemberResponse -> UserResponse
+            .map { UserResponse.from(it) }
     }
 }

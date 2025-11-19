@@ -24,6 +24,7 @@ class Review(
 
 ) {
     @Id
+    @Column(name = "review_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val reviewId: Long = 0 // 리뷰 구분값(PK)
 
@@ -32,7 +33,6 @@ class Review(
     @CollectionTable(
         name = "review_photos",
         joinColumns = [JoinColumn(name = "review_id")])
-
     @Column(name = "review_url")
     var photos: MutableList<String> = mutableListOf()
 

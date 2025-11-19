@@ -5,8 +5,8 @@ import java.time.LocalDateTime
 @Entity
 @Table(name = "users")
 class User(
-    @Column(nullable = false, unique = true, length = 50) // (추가)
-    val loginId: String, // (추가)
+    @Column(nullable = false, unique = true, length = 50)
+    val loginId: String,
 
     @Column(nullable = false, unique = true, length = 100)
     var email: String,
@@ -25,6 +25,7 @@ class User(
 ){
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id")
     val userId: Long = 0
 
     @Column(nullable = false)
