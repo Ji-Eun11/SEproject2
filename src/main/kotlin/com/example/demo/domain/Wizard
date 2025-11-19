@@ -1,1 +1,42 @@
+package com.example.demo.domain.wizard
 
+import jakarta.persistence.*
+import org.springframework.data.annotation.CreatedDate
+import org.springframework.data.annotation.LastModifiedDate
+import org.springframework.data.jpa.domain.support.AuditingEntityListener
+import java.time.LocalDateTime
+
+@Entity
+@Table(name = "wizard_questions")
+@EntityListeners(AuditingEntityListener::class)
+class WizardQuestion(
+
+    @Column(nullable = false)
+    val step: Int,  // 질문 순서
+
+    @Column(nullable = false, length = 200)
+    val questionText: String, // 질문 내용
+
+    @OneToMany(mappedBy = "question", cascade = [CascadeType.ALL], fetch = FetchType.LAZY, orphanRemoval = true)
+    val answers: MutableList<WizardAnswer> = mutableListOf()
+
+) {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val questionId: Long = 0
+
+    @CreatedDate
+    @Column(nullable = false, updatable = false)
+    lateinit var createdAt: LocalDateTime
+
+    @LastModifiedDate
+    @Column(nullable = false)
+    lateinit var updatedAt: LocalDateTime
+        protected set
+
+    /** 질문에 답변 추가 */
+    fun addAnswer(answer: WizardAnswer) {
+        answers.add(answer)
+    }
+}
