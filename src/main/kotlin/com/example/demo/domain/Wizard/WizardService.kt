@@ -1,10 +1,10 @@
 package com.example.demo.domain.wizard.service
 
 import com.example.demo.domain.place.Place
-import com.example.demo.domain.place.repository.PlaceRepository
+import com.example.demo.domain.place.PlaceRepository
 import com.example.demo.domain.wizard.dto.*
-import com.example.demo.domain.wizard.repository.WizardAnswerRepository
-import com.example.demo.domain.wizard.repository.WizardQuestionRepository
+import com.example.demo.domain.wizard.WizardAnswerRepository
+import com.example.demo.domain.wizard.WizardQuestionRepository
 import org.springframework.stereotype.Service
 
 // 마법사 질문 조회 + 추천 알고리즘을 처리하는 서비스 계층
