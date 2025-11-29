@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "./ui/button";
 import { Checkbox } from "./ui/checkbox";
 import {
@@ -12,6 +12,8 @@ import { ProfileEditDialog } from "./ProfileEditDialog";
 import { AccountManagement } from "./AccountManagement";
 import { PetDetail } from "./PetDetail";
 import { PetForm } from "./PetForm"; 
+// [추가] 펫 수정용 다이얼로그 임포트
+import { PetEditDialog } from "./PetEditDialog";
 import { API_BASE_URL } from "../lib/constants"; 
 
 interface Pet {
@@ -43,18 +45,17 @@ interface MyPageProps {
 export function MyPage({ onBack, onLogout }: MyPageProps) {
   const [user, setUser] = useState<any>(null);
   const [pets, setPets] = useState<Pet[]>([]);
-  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]); 
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null); // 에러 상태 추가
+  const [error, setError] = useState<string | null>(null);
 
-  // UI 상태 관리
   const [showProfileEdit, setShowProfileEdit] = useState(false);
   const [showAccountManagement, setShowAccountManagement] = useState(false);
   const [selectedPetId, setSelectedPetId] = useState<number | null>(null);
   const [showPetEdit, setShowPetEdit] = useState(false);
   const [showAddPet, setShowAddPet] = useState(false);
 
-  useEffect(() => {
+  const fetchMyData = useCallback(async () => {
     const token = localStorage.getItem("accessToken");
     const userId = localStorage.getItem("userId");
 
@@ -63,106 +64,233 @@ export function MyPage({ onBack, onLogout }: MyPageProps) {
       return;
     }
 
-    const fetchData = async () => {
-      try {
-        // 1. 사용자 정보 조회
-        const userRes = await fetch(`${API_BASE_URL}/api/users/me`, {
-  headers: { Authorization: `Bearer ${token}` },
-});
-        
-        if (!userRes.ok) {
-            // 500 에러 등이 나면 여기서 잡힘
-            throw new Error("사용자 정보를 찾을 수 없습니다. (서버 재시작됨)");
-        }
+    try {
+      setLoading(true);
+      // 1. 사용자 정보 조회
+      const userRes = await fetch(`${API_BASE_URL}/api/users/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      if (!userRes.ok) throw new Error("사용자 정보를 찾을 수 없습니다.");
 
-        const userData = await userRes.json();
-        
-        if (userData.success) {
-            setUser({
-                name: userData.data.nickname,
-                nickname: userData.data.nickname,
-                email: userData.data.email,
-                phone: "010-0000-0000",
-                birthdate: "20000101",
-                address: "주소 정보 없음",
-                profilePhoto: userData.data.profileImage
-            });
-        } else {
-            throw new Error(userData.message);
-        }
-
-        // 2. 반려동물 목록 조회
-        const petRes = await fetch(`${API_BASE_URL}/api/users/${userId}/pets`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const petData = await petRes.json();
-
-        if (petData.success) {
-            const mappedPets = petData.data.map((p: any) => ({
-                id: p.petId,
-                name: p.name,
-                breed: "품종 정보 없음", 
-                age: 0, 
-                size: p.size,
-                gender: p.gender,
-                birthday: p.birthDate,
-                weight: p.weight,
-                personality: p.specialNotes
-            }));
-            setPets(mappedPets);
-        }
-
-      } catch (error: any) {
-        console.error("데이터 로딩 실패:", error);
-        setError(error.message || "데이터를 불러오는 중 오류가 발생했습니다.");
-      } finally {
-        setLoading(false);
+      const userData = await userRes.json();
+      
+      if (userData.success) {
+          setUser({
+              name: userData.data.nickname,
+              nickname: userData.data.nickname,
+              email: userData.data.email,
+              phone: "010-0000-0000",
+              birthdate: "20000101",
+              address: "주소 정보 없음",
+              profilePhoto: userData.data.profileImage
+          });
       }
-    };
 
-    fetchData();
+      // 2. 반려동물 목록 조회
+      const petRes = await fetch(`${API_BASE_URL}/api/users/${userId}/pets`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const petData = await petRes.json();
+
+      if (petData.success) {
+          const mappedPets = petData.data.map((p: any) => ({
+              id: p.petId,
+              name: p.name,
+              breed: "품종 정보 없음", 
+              age: 0, // 나이는 생일로 계산하거나 별도 로직 필요
+              size: p.size,
+              gender: p.gender,
+              birthday: p.birthDate ? p.birthDate.replace(/-/g, "") : "", // YYYY-MM-DD -> YYYYMMDD 변환
+              weight: p.weight,
+              personality: p.specialNotes
+          }));
+          setPets(mappedPets);
+      }
+
+    } catch (error: any) {
+      console.error("데이터 로딩 실패:", error);
+      setError(error.message || "데이터를 불러오는 중 오류가 발생했습니다.");
+    } finally {
+      setLoading(false);
+    }
   }, [onLogout]);
 
-  const handlePetClick = (petId: number) => { setSelectedPetId(petId); };
-  const handlePetEdit = () => { setShowPetEdit(true); };
-  const handlePetDelete = async () => { if (selectedPetId) { alert("삭제 기능 준비 중"); setSelectedPetId(null); } };
+  useEffect(() => {
+    fetchMyData();
+  }, [fetchMyData]);
 
+  // 프로필 수정
+  const handleProfileUpdate = async (newNickname: string) => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/users/profile`, {
+        method: "PUT",
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify({
+          nickname: newNickname,
+          profileImage: user.profilePhoto
+        }),
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        setUser((prev: any) => ({ 
+            ...prev, 
+            nickname: result.data.nickname,
+            name: result.data.nickname,
+            profilePhoto: result.data.profileImage
+        }));
+        setShowProfileEdit(false);
+      } else {
+        alert(result.message || "프로필 수정에 실패했습니다.");
+      }
+    } catch (error) {
+      alert("서버 연결 중 오류가 발생했습니다.");
+    }
+  };
+
+  const handlePetClick = (petId: number) => { setSelectedPetId(petId); };
+  
+  // [수정] 펫 수정 다이얼로그 열기
+  const handlePetEdit = () => { setShowPetEdit(true); };
+
+  // [추가] 펫 삭제 로직 (실제 API 호출)
+  const handlePetDelete = async () => { 
+    if (!selectedPetId) return;
+    if (!window.confirm("정말로 삭제하시겠습니까?")) return;
+
+    const token = localStorage.getItem("accessToken");
+    const userId = localStorage.getItem("userId");
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/api/users/${userId}/pets/${selectedPetId}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (res.ok) {
+            alert("반려동물이 삭제되었습니다.");
+            setSelectedPetId(null); // 목록 화면으로 돌아가기
+            fetchMyData(); // 목록 갱신
+        } else {
+            alert("삭제에 실패했습니다.");
+        }
+    } catch (e) {
+        alert("오류가 발생했습니다.");
+    }
+  };
+
+  // 날짜 변환 헬퍼 (YYYYMMDD -> YYYY-MM-DD)
+  const formatBirthDate = (dateStr: string) => {
+    if (!dateStr || dateStr.length !== 8) return null;
+    return `${dateStr.substring(0, 4)}-${dateStr.substring(4, 6)}-${dateStr.substring(6, 8)}`;
+  };
+
+  // [수정] 펫 추가 로직 (데이터 매핑 적용)
   const handleAddPetSubmit = async (petData: any) => {
     const token = localStorage.getItem("accessToken");
     const userId = localStorage.getItem("userId");
+    
+    // 백엔드 DTO 형식에 맞춰 데이터 변환
+    const requestBody = {
+        name: petData.name,
+        gender: petData.gender,
+        size: petData.size,
+        birthDate: formatBirthDate(petData.birthday),
+        weight: petData.weight,
+        specialNotes: petData.personality // personality -> specialNotes 매핑
+    };
+
     try {
         const res = await fetch(`${API_BASE_URL}/api/users/${userId}/pets`, {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body: JSON.stringify(petData),
+            body: JSON.stringify(requestBody),
         });
         if (res.ok) {
             alert("반려동물이 등록되었습니다.");
             setShowAddPet(false);
-            window.location.reload();
+            fetchMyData(); 
         } else {
-            alert("등록에 실패했습니다.");
+            alert("등록에 실패했습니다. 입력 정보를 확인해주세요.");
         }
     } catch (e) { alert("오류가 발생했습니다."); }
   };
 
-  // [수정] 로딩 및 에러 처리 강화
-  if (loading) return <div className="flex h-screen items-center justify-center">로딩중...</div>;
+  // [추가] 펫 수정 로직 (실제 API 호출)
+  const handleUpdatePetSubmit = async (petData: any) => {
+    const token = localStorage.getItem("accessToken");
+    const userId = localStorage.getItem("userId");
+    if (!selectedPetId) return;
+
+    // 백엔드 DTO 형식에 맞춰 데이터 변환
+    const requestBody = {
+        name: petData.name,
+        gender: petData.gender,
+        size: petData.size,
+        birthDate: formatBirthDate(petData.birthday),
+        weight: petData.weight,
+        specialNotes: petData.personality
+    };
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/api/users/${userId}/pets/${selectedPetId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify(requestBody),
+        });
+        if (res.ok) {
+            alert("정보가 수정되었습니다.");
+            setShowPetEdit(false);
+            fetchMyData(); // 데이터 갱신
+        } else {
+            alert("수정에 실패했습니다.");
+        }
+    } catch (e) { alert("오류가 발생했습니다."); }
+  };
+
+  if (loading && !user) return <div className="flex h-screen items-center justify-center">로딩중...</div>;
   
-  // [수정] 유저 정보가 없거나 에러가 발생했을 때 안내 화면 표시 (흰 화면 방지)
   if (error || !user) return (
     <div className="flex flex-col h-screen items-center justify-center gap-4">
         <p className="text-red-500 font-bold">{error || "사용자 정보가 초기화되었습니다."}</p>
-        <p className="text-gray-600">서버가 재시작되어 데이터가 삭제되었습니다.<br/>다시 회원가입을 진행해주세요.</p>
-        <Button onClick={onLogout}>로그아웃 하고 되돌아가기</Button>
+        <p className="text-gray-600">서버 재접속 등으로 인해 데이터가 없습니다.<br/>다시 로그인 해주세요.</p>
+        <Button onClick={onLogout}>로그아웃</Button>
     </div>
   );
 
   if (showAddPet) return <PetForm onSubmit={handleAddPetSubmit} onBack={() => setShowAddPet(false)} />;
 
   const selectedPet = selectedPetId ? pets.find((p) => p.id === selectedPetId) : null;
+  
+  // [수정] 상세 페이지 렌더링 시 수정 다이얼로그도 함께 포함
   if (selectedPet) {
-    return <PetDetail pet={selectedPet} onBack={() => setSelectedPetId(null)} onEdit={handlePetEdit} onDelete={handlePetDelete} />;
+    return (
+      <>
+        <PetDetail 
+            pet={selectedPet} 
+            onBack={() => setSelectedPetId(null)} 
+            onEdit={handlePetEdit} 
+            onDelete={handlePetDelete} 
+        />
+        {/* 수정 모달 (selectedPet이 있을 때만 렌더링) */}
+        {showPetEdit && (
+            <PetEditDialog 
+                open={showPetEdit} 
+                onClose={() => setShowPetEdit(false)} 
+                pet={selectedPet} 
+                onSave={handleUpdatePetSubmit} 
+            />
+        )}
+      </>
+    );
   }
 
   if (showAccountManagement) {
@@ -225,7 +353,13 @@ export function MyPage({ onBack, onLogout }: MyPageProps) {
         </div>
       </div>
 
-      <ProfileEditDialog open={showProfileEdit} onClose={() => setShowProfileEdit(false)} currentNickname={user.nickname} profileInitial={profileInitial} onSave={(name: string) => { setUser({...user, nickname: name}); setShowProfileEdit(false); }} />
+      <ProfileEditDialog 
+        open={showProfileEdit} 
+        onClose={() => setShowProfileEdit(false)} 
+        currentNickname={user.nickname} 
+        profileInitial={profileInitial} 
+        onSave={handleProfileUpdate} 
+      />
     </div>
   );
 }

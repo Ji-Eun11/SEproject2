@@ -161,4 +161,19 @@ class UserService(
         return userRepository.findAll()
             .map { UserResponse.from(it) }
     }
+
+    @Transactional(readOnly = true)
+    fun checkLoginIdDuplicate(loginId: String): Boolean {
+        return userRepository.existsByLoginId(loginId)
+    }
+
+    @Transactional(readOnly = true)
+    fun checkEmailDuplicate(email: String): Boolean {
+        return userRepository.existsByEmail(email)
+    }
+
+    @Transactional(readOnly = true)
+    fun checkNicknameDuplicate(nickname: String): Boolean {
+        return userRepository.existsByNickname(nickname)
+    }
 }

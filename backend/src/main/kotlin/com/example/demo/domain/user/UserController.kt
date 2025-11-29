@@ -133,4 +133,25 @@ class UserController(
         )
         )
     }
+
+    // [추가] 1. 아이디 중복 확인 (GET /api/users/check-id?loginId=...)
+    @GetMapping("/check-id")
+    fun checkLoginId(@RequestParam loginId: String): ResponseEntity<ApiResponse<Boolean>> {
+        val exists = userService.checkLoginIdDuplicate(loginId)
+        return ResponseEntity.ok(ApiResponse(success = true, message = "중복 확인 완료", data = exists))
+    }
+
+    // [추가] 2. 이메일 중복 확인 (GET /api/users/check-email?email=...)
+    @GetMapping("/check-email")
+    fun checkEmail(@RequestParam email: String): ResponseEntity<ApiResponse<Boolean>> {
+        val exists = userService.checkEmailDuplicate(email)
+        return ResponseEntity.ok(ApiResponse(success = true, message = "중복 확인 완료", data = exists))
+    }
+
+    // [추가] 3. 닉네임 중복 확인 (GET /api/users/check-nickname?nickname=...)
+    @GetMapping("/check-nickname")
+    fun checkNickname(@RequestParam nickname: String): ResponseEntity<ApiResponse<Boolean>> {
+        val exists = userService.checkNicknameDuplicate(nickname)
+        return ResponseEntity.ok(ApiResponse(success = true, message = "중복 확인 완료", data = exists))
+    }
 }

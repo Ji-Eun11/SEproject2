@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Header } from "./components/Header";
 import { Login } from "./components/Login";
 import { Signup } from "./components/Signup";
-import { FindAccount } from "./components/FindAccount";
+// import { FindAccount } from "./components/FindAccount"; // 사용하지 않으면 주석 처리
 import { MyPage } from "./components/MyPage";
 import { PetForm } from "./components/PetForm";
 import { WizardDialog } from "./components/WizardDialog";
@@ -13,13 +13,15 @@ import { ThemeSection } from "./components/ThemeSection";
 import { MapView } from "./components/MapView";
 import { Toaster } from "./components/ui/sonner";
 import { toast } from "sonner";
-import { SplashScreen } from "./components/SplashScreen";
+// [수정] SplashScreen 임포트 삭제
+// import { SplashScreen } from "./components/SplashScreen";
 import { API_BASE_URL } from "./lib/constants";
 
-type Page = "splash" | "main" | "login" | "signup" | "findId" | "findPassword" | "mypage" | "addPet" | "editPet" | "search" | "placeDetail";
+type Page = "main" | "login" | "signup" | "findId" | "findPassword" | "mypage" | "addPet" | "editPet" | "search" | "placeDetail";
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<Page>("splash");
+  // [수정] 시작 페이지를 "splash"가 아닌 "main"으로 변경
+  const [currentPage, setCurrentPage] = useState<Page>("main");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
@@ -37,11 +39,10 @@ export default function App() {
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     const userId = localStorage.getItem("userId");
-    // 토큰과 유저ID가 모두 정상적으로 있을 때만 로그인 처리
+    
     if (token && userId && userId !== "undefined") {
         setIsLoggedIn(true);
     } else {
-        // 정보가 이상하면 강제 로그아웃 처리
         localStorage.clear();
         setIsLoggedIn(false);
     }
@@ -78,20 +79,16 @@ export default function App() {
     fetchPlaces();
   }, []);
 
-  // [수정됨] 로그인 성공 핸들러 (안전장치 추가)
   const handleLoginSuccess = (token: string, userOrId: any) => {
-    // 1. 토큰 저장
     localStorage.setItem("accessToken", token);
     
-    // 2. ID 추출 및 검증
     let idToSave;
     if (typeof userOrId === 'object' && userOrId !== null) {
-        idToSave = userOrId.userId; // 객체라면 userId 필드 사용
+        idToSave = userOrId.userId; 
     } else {
-        idToSave = userOrId; // 숫자라면 그대로 사용
+        idToSave = userOrId; 
     }
 
-    // 3. ID가 유효한지 확인 후 저장
     if (idToSave !== undefined && idToSave !== null) {
         localStorage.setItem("userId", idToSave.toString());
         setIsLoggedIn(true);
@@ -104,7 +101,7 @@ export default function App() {
   };
 
   const handleLogout = () => {
-    localStorage.clear(); // 싹 지우기
+    localStorage.clear(); 
     setIsLoggedIn(false);
     setCurrentPage("main");
     toast.success("로그아웃되었습니다!");
@@ -129,8 +126,7 @@ export default function App() {
 
   const renderPage = () => {
     switch (currentPage) {
-      case "splash":
-        return <SplashScreen onComplete={() => setCurrentPage("main")} />;
+      // [수정] case "splash" 삭제됨
       case "login":
         return <Login onLogin={handleLoginSuccess} onSignup={() => setCurrentPage("signup")} onFindAccount={() => {}} onBack={() => setCurrentPage("main")} />;
       case "signup":
@@ -143,6 +139,7 @@ export default function App() {
       case "search":
         return <SearchPage places={places} initialQuery={searchQuery} onBack={() => setCurrentPage("main")} onPlaceClick={handlePlaceClick} onWizardClick={() => setShowWizard(true)} onFilterClick={() => setShowFilter(true)} isLoggedIn={isLoggedIn} onLoginClick={() => setCurrentPage("login")} onSignupClick={() => setCurrentPage("signup")} onLogoutClick={handleLogout} onMyPageClick={() => setCurrentPage("mypage")} />;
       case "addPet":
+        // 이 부분은 MyPage 내부 모달로 처리되므로 사실상 안 쓰이지만 유지
         return <PetForm onSubmit={() => {}} onBack={() => setCurrentPage("mypage")} />;
       case "main":
       default:
