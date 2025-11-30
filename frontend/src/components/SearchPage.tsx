@@ -1,3 +1,5 @@
+const [searchMode, setSearchMode] = useState(true);
+
 import { useState } from "react";
 import { ThemeSection } from "./ThemeSection";
 import { PlaceCard } from "./PlaceCard";
@@ -73,21 +75,21 @@ export function SearchPage({
   return (
     <div className="min-h-screen bg-white">
       <Header
-        isLoggedIn={isLoggedIn}
-        onLoginClick={onLoginClick}
-        onSignupClick={onSignupClick}
-        onLogoutClick={onLogoutClick}
-        onMyPageClick={onMyPageClick}
-        onLogoClick={onBack}
-        onSearchClick={() => {}}
-        onWizardClick={onWizardClick}
-        onFilterClick={() => setShowFilters(true)}
-        showSearch={true}
-        searchMode={true}
-        searchQuery={inputQuery}
-        onSearchChange={setInputQuery}
-        onSearch={handleSearch}
-      />
+  isLoggedIn={isLoggedIn}
+  onLoginClick={onLoginClick}
+  onSignupClick={onSignupClick}
+  onLogoutClick={onLogoutClick}
+  onMyPageClick={onMyPageClick}
+  onLogoClick={onBack}
+  onSearchClick={() => setSearchMode(true)} 
+  onFilterClick={() => setShowFilters(true)}
+  showSearch={true}
+  searchMode={searchMode}
+  searchQuery={inputQuery}
+  onSearchChange={setInputQuery}
+  onSearch={handleSearch}
+/>
+
 
       <FilterDialog open={showFilters} onClose={() => setShowFilters(false)} onApply={setActiveFilters} />
 

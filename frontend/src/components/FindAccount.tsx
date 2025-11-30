@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import logoImage from "figma:asset/13429f3bf73f16f4f94cb74ce47b8a5ef9aa39a9.png";
-// [수정] Dialog 관련 컴포넌트 추가 임포트
+import logoImage from "../assets/13429f3bf73f16f4f94cb74ce47b8a5ef9aa39a9.png";
+
 import {
   Dialog,
   DialogContent,
@@ -36,16 +36,14 @@ export function FindAccount({ type, onBack }: FindAccountProps) {
         setError("모든 항목을 입력해주세요.");
         return;
       }
-      // Mock result
-      setResult("user123");
+      setResult("user123"); // Mock
       setShowResult(true);
     } else {
       if (!formData.username || !formData.phone) {
         setError("모든 항목을 입력해주세요.");
         return;
       }
-      // Mock result
-      setResult("password123!");
+      setResult("password123!"); // Mock
       setShowResult(true);
     }
     setError("");
@@ -55,9 +53,11 @@ export function FindAccount({ type, onBack }: FindAccountProps) {
     <div className="min-h-screen bg-white flex items-center justify-center px-6 py-12">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
-          {/* Logo */}
           <div className="flex flex-col items-center mb-8">
-            <button onClick={onBack} className="hover:opacity-70 transition-opacity">
+            <button
+              onClick={onBack}
+              className="hover:opacity-70 transition-opacity"
+            >
               <img src={logoImage} alt="어디가개" className="h-24 mb-4" />
             </button>
             <h1 className="text-3xl mb-2">
@@ -70,14 +70,12 @@ export function FindAccount({ type, onBack }: FindAccountProps) {
             </p>
           </div>
 
-          {/* Error Message */}
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
               {error}
             </div>
           )}
 
-          {/* Form */}
           <div className="space-y-4 mb-6">
             {type === "id" ? (
               <>
@@ -86,7 +84,7 @@ export function FindAccount({ type, onBack }: FindAccountProps) {
                   <Input
                     id="name"
                     value={formData.name}
-                    onChange={(e) =>
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setFormData({ ...formData, name: e.target.value })
                     }
                     placeholder="이름을 입력하세요"
@@ -99,7 +97,7 @@ export function FindAccount({ type, onBack }: FindAccountProps) {
                   <Input
                     id="birthdate"
                     value={formData.birthdate}
-                    onChange={(e) =>
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setFormData({
                         ...formData,
                         birthdate: e.target.value.replace(/\D/g, ""),
@@ -117,7 +115,7 @@ export function FindAccount({ type, onBack }: FindAccountProps) {
                     id="email"
                     type="email"
                     value={formData.email}
-                    onChange={(e) =>
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setFormData({ ...formData, email: e.target.value })
                     }
                     placeholder="example@email.com"
@@ -133,7 +131,7 @@ export function FindAccount({ type, onBack }: FindAccountProps) {
                     id="username"
                     type="text"
                     value={formData.username}
-                    onChange={(e) =>
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setFormData({ ...formData, username: e.target.value })
                     }
                     placeholder="아이디를 입력하세요"
@@ -146,10 +144,10 @@ export function FindAccount({ type, onBack }: FindAccountProps) {
                   <Input
                     id="phone"
                     value={formData.phone}
-                    onChange={(e) =>
-                      setFormData({ 
-                        ...formData, 
-                        phone: e.target.value.replace(/\D/g, "") 
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setFormData({
+                        ...formData,
+                        phone: e.target.value.replace(/\D/g, ""),
                       })
                     }
                     placeholder="01012345678"
@@ -161,7 +159,6 @@ export function FindAccount({ type, onBack }: FindAccountProps) {
             )}
           </div>
 
-          {/* Buttons */}
           <div className="flex gap-3">
             <Button onClick={onBack} variant="outline" className="flex-1">
               취소
@@ -176,14 +173,12 @@ export function FindAccount({ type, onBack }: FindAccountProps) {
         </div>
       </div>
 
-      {/* Result Dialog */}
-      <Dialog open={showResult} onOpenChange={setShowResult}>
+      <Dialog open={showResult} onOpenChange={(open: boolean) => setShowResult(open)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
               {type === "id" ? "아이디 찾기 결과" : "비밀번호 찾기 결과"}
             </DialogTitle>
-            {/* [수정] 접근성 경고 해결을 위한 설명 추가 */}
             <DialogDescription>
               요청하신 계정 정보 조회 결과입니다.
             </DialogDescription>

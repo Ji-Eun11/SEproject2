@@ -1,10 +1,10 @@
 "use client";
 
 import * as React from "react";
-import * as DialogPrimitive from "@radix-ui/react-dialog@1.1.6";
-import { XIcon } from "lucide-react@0.487.0";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { X as XIcon } from "lucide-react";
 
-import { cn } from "@/lib/utils";
+import { cn } from "./utils";
 
 function Dialog({
   ...props
@@ -30,7 +30,7 @@ function DialogClose({
   return <DialogPrimitive.Close data-slot="dialog-close" {...props} />;
 }
 
-// [수정됨] forwardRef 적용
+// forwardRef 적용
 const DialogOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>

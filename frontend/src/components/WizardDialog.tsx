@@ -10,7 +10,7 @@ export function WizardDialog({ open, onClose, places, onPlaceClick }: any) {
   // 질문 배열 (Q3, Q4 추가)
   const questions = [
     { id: 1, q: "크기는?", o: ["소형", "중형", "대형"] },
-    { id: 2, q: "컨디션은?", o: ["활발", "조용"] },
+    { id: 2, q: "성격은?", o: ["활발", "조용"] },
     { id: 3, q: "활동 선호?", o: ["야외", "실내"] },
     { id: 4, q: "거리 선호?", o: ["가까움", "중간", "멀리"] },
   ];
