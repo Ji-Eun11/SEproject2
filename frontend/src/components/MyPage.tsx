@@ -11,9 +11,10 @@ import logoImage from "../assets/13429f3bf73f16f4f94cb74ce47b8a5ef9aa39a9.png";
 import { ProfileEditDialog } from "./ProfileEditDialog";
 import { AccountManagement } from "./AccountManagement";
 import { PetDetail } from "./PetDetail";
-import { PetForm } from "./PetForm"; 
-import { PetEditDialog } from "./PetEditDialog";
-import { API_BASE_URL } from "../lib/constants"; 
+import { PetForm } from "./PetForm";
+// [주의] PetEditDialog 컴포넌트 파일에 'export' 키워드가 있는지 확인하세요!
+import { PetEditDialog } from "./PetEditDialog"; 
+import { API_BASE_URL } from "../lib/constants";
 
 interface Pet {
   id: number;
@@ -45,7 +46,7 @@ export function MyPage({ onBack, onLogout }: MyPageProps) {
   // 1. 상태 선언 (State)
   const [user, setUser] = useState<any>(null);
   const [pets, setPets] = useState<Pet[]>([]);
-  const [reviews, setReviews] = useState<Review[]>([]); 
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -71,27 +72,28 @@ export function MyPage({ onBack, onLogout }: MyPageProps) {
 
     try {
       setLoading(true);
-      
+
       const userRes = await fetch(`${API_BASE_URL}/api/users/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       if (!userRes.ok) throw new Error("사용자 정보를 찾을 수 없습니다.");
 
       const userData = await userRes.json();
-      
+
       if (userData.success) {
-          setUser({
-              name: userData.data.name || userData.data.nickname,
-              nickname: userData.data.nickname,
-              email: userData.data.email,
-              phone: userData.data.phone || "010-0000-0000",
-              birthdate: userData.data.birthdate || "",
-              address: userData.data.address || "",
-              profilePhoto: userData.data.profileImage
-          });
+        setUser({
+          // [수정] 이름이 닉네임으로 대체되지 않도록 명시적으로 name 필드만 사용
+          name: userData.data.name || "",
+          nickname: userData.data.nickname,
+          email: userData.data.email,
+          phone: userData.data.phone || "010-0000-0000",
+          birthdate: userData.data.birthdate || "",
+          address: userData.data.address || "",
+          profilePhoto: userData.data.profileImage
+        });
       } else {
-          throw new Error(userData.message);
+        throw new Error(userData.message);
       }
 
       const petRes = await fetch(`${API_BASE_URL}/api/users/${userId}/pets`, {
@@ -100,18 +102,19 @@ export function MyPage({ onBack, onLogout }: MyPageProps) {
       const petData = await petRes.json();
 
       if (petData.success) {
-          const mappedPets = petData.data.map((p: any) => ({
-              id: p.petId,
-              name: p.name,
-              breed: "품종 정보 없음", 
-              age: p.age,
-              size: p.size,
-              gender: p.gender,
-              birthday: p.birthDate ? p.birthDate.replace(/-/g, "") : "", 
-              weight: p.weight,
-              personality: p.specialNotes
-          }));
-          setPets(mappedPets);
+        const mappedPets = petData.data.map((p: any) => ({
+          id: p.petId,
+          name: p.name,
+          breed: "품종 정보 없음",
+          age: p.age,
+          size: p.size,
+          gender: p.gender,
+          // birthDate의 하이픈 제거
+          birthday: p.birthDate ? p.birthDate.replace(/-/g, "") : "",
+          weight: p.weight,
+          personality: p.specialNotes
+        }));
+        setPets(mappedPets);
       }
 
     } catch (error: any) {
@@ -134,13 +137,13 @@ export function MyPage({ onBack, onLogout }: MyPageProps) {
     try {
       const response = await fetch(`${API_BASE_URL}/api/users/profile`, {
         method: "PUT",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}` 
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
           nickname: newNickname,
-          email: user.email, 
+          email: user.email,
           name: user.name,
           birthdate: user.birthdate,
           phone: user.phone,
@@ -150,7 +153,7 @@ export function MyPage({ onBack, onLogout }: MyPageProps) {
       });
 
       const result = await response.json();
-      
+
       if (result.success) {
         fetchMyData();
         setShowProfileEdit(false);
@@ -164,8 +167,8 @@ export function MyPage({ onBack, onLogout }: MyPageProps) {
 
   const handlePetClick = (petId: number) => { setSelectedPetId(petId); };
   const handlePetEdit = () => { setShowPetEdit(true); };
-  
-  const handlePetDelete = async () => { 
+
+  const handlePetDelete = async () => {
     if (!selectedPetId) return;
     if (!window.confirm("정말로 삭제하시겠습니까?")) return;
 
@@ -173,20 +176,20 @@ export function MyPage({ onBack, onLogout }: MyPageProps) {
     const userId = localStorage.getItem("userId");
 
     try {
-        const res = await fetch(`${API_BASE_URL}/api/users/${userId}/pets/${selectedPetId}`, {
-            method: "DELETE",
-            headers: { Authorization: `Bearer ${token}` },
-        });
+      const res = await fetch(`${API_BASE_URL}/api/users/${userId}/pets/${selectedPetId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-        if (res.ok) {
-            alert("반려동물이 삭제되었습니다.");
-            setSelectedPetId(null);
-            fetchMyData();
-        } else {
-            alert("삭제에 실패했습니다.");
-        }
+      if (res.ok) {
+        alert("반려동물이 삭제되었습니다.");
+        setSelectedPetId(null);
+        fetchMyData();
+      } else {
+        alert("삭제에 실패했습니다.");
+      }
     } catch (e) {
-        alert("오류가 발생했습니다.");
+      alert("오류가 발생했습니다.");
     }
   };
 
@@ -198,30 +201,30 @@ export function MyPage({ onBack, onLogout }: MyPageProps) {
   const handleAddPetSubmit = async (petData: any) => {
     const token = localStorage.getItem("accessToken");
     const userId = localStorage.getItem("userId");
-    
+
     const requestBody = {
-        name: petData.name,
-        gender: petData.gender,
-        size: petData.size,
-        birthDate: formatBirthDate(petData.birthday),
-        age: petData.age, 
-        weight: Number(petData.weight) || null,
-        specialNotes: petData.personality 
+      name: petData.name,
+      gender: petData.gender,
+      size: petData.size,
+      birthDate: formatBirthDate(petData.birthday),
+      age: petData.age,
+      weight: Number(petData.weight) || null,
+      specialNotes: petData.personality
     };
 
     try {
-        const res = await fetch(`${API_BASE_URL}/api/users/${userId}/pets`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body: JSON.stringify(requestBody),
-        });
-        if (res.ok) {
-            alert("반려동물이 등록되었습니다.");
-            setShowAddPet(false);
-            fetchMyData(); 
-        } else {
-            alert("등록에 실패했습니다.");
-        }
+      const res = await fetch(`${API_BASE_URL}/api/users/${userId}/pets`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(requestBody),
+      });
+      if (res.ok) {
+        alert("반려동물이 등록되었습니다.");
+        setShowAddPet(false);
+        fetchMyData();
+      } else {
+        alert("등록에 실패했습니다.");
+      }
     } catch (e) { alert("오류가 발생했습니다."); }
   };
 
@@ -231,55 +234,55 @@ export function MyPage({ onBack, onLogout }: MyPageProps) {
     if (!selectedPetId) return;
 
     const requestBody = {
-        name: petData.name,
-        gender: petData.gender,
-        size: petData.size,
-        birthDate: formatBirthDate(petData.birthday),
-        age: petData.age,
-        weight: Number(petData.weight) || null,
-        specialNotes: petData.personality
+      name: petData.name,
+      gender: petData.gender,
+      size: petData.size,
+      birthDate: formatBirthDate(petData.birthday),
+      age: petData.age,
+      weight: Number(petData.weight) || null,
+      specialNotes: petData.personality
     };
 
     try {
-        const res = await fetch(`${API_BASE_URL}/api/users/${userId}/pets/${selectedPetId}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body: JSON.stringify(requestBody),
-        });
-        if (res.ok) {
-            alert("정보가 수정되었습니다.");
-            setShowPetEdit(false);
-            fetchMyData();
-        } else {
-            alert("수정에 실패했습니다.");
-        }
+      const res = await fetch(`${API_BASE_URL}/api/users/${userId}/pets/${selectedPetId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(requestBody),
+      });
+      if (res.ok) {
+        alert("정보가 수정되었습니다.");
+        setShowPetEdit(false);
+        fetchMyData();
+      } else {
+        alert("수정에 실패했습니다.");
+      }
     } catch (e) { alert("오류가 발생했습니다."); }
   };
 
   const handleDeleteAccount = async () => {
     const token = localStorage.getItem("accessToken");
     try {
-        const res = await fetch(`${API_BASE_URL}/api/users/me`, {
-            method: "DELETE",
-            headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.ok) {
-            alert("탈퇴가 완료되었습니다.");
-            onLogout();
-        } else {
-            alert("탈퇴 처리에 실패했습니다.");
-        }
+      const res = await fetch(`${API_BASE_URL}/api/users/me`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        alert("탈퇴가 완료되었습니다.");
+        onLogout();
+      } else {
+        alert("탈퇴 처리에 실패했습니다.");
+      }
     } catch (e) { alert("오류가 발생했습니다."); }
   };
 
   // 5. 조건부 렌더링 (Return)
   if (loading && !user) return <div className="flex h-screen items-center justify-center">로딩중...</div>;
-  
+
   if (error || !user) return (
     <div className="flex flex-col h-screen items-center justify-center gap-4">
-        <p className="text-red-500 font-bold">{error || "사용자 정보가 초기화되었습니다."}</p>
-        <p className="text-gray-600">서버 재접속 등으로 인해 데이터가 없습니다.<br/>다시 로그인 해주세요.</p>
-        <Button onClick={onLogout}>로그아웃</Button>
+      <p className="text-red-500 font-bold">{error || "사용자 정보가 초기화되었습니다."}</p>
+      <p className="text-gray-600">서버 재접속 등으로 인해 데이터가 없습니다.<br />다시 로그인 해주세요.</p>
+      <Button onClick={onLogout}>로그아웃</Button>
     </div>
   );
 
@@ -288,20 +291,20 @@ export function MyPage({ onBack, onLogout }: MyPageProps) {
   if (selectedPet) {
     return (
       <>
-        <PetDetail 
-            pet={selectedPet} 
-            onBack={() => setSelectedPetId(null)} 
-            onEdit={handlePetEdit} 
-            onDelete={handlePetDelete} 
+        <PetDetail
+          pet={selectedPet}
+          onBack={() => setSelectedPetId(null)}
+          onEdit={handlePetEdit}
+          onDelete={handlePetDelete}
         />
         {/* 수정 모달: selectedPet이 확실히 있을 때만 렌더링 */}
         {showPetEdit && (
-            <PetEditDialog 
-                open={showPetEdit} 
-                onClose={() => setShowPetEdit(false)} 
-                pet={selectedPet} 
-                onSave={handleUpdatePetSubmit} 
-            />
+          <PetEditDialog
+            open={showPetEdit}
+            onClose={() => setShowPetEdit(false)}
+            pet={selectedPet}
+            onSave={handleUpdatePetSubmit}
+          />
         )}
       </>
     );
@@ -309,11 +312,11 @@ export function MyPage({ onBack, onLogout }: MyPageProps) {
 
   if (showAccountManagement) {
     return (
-      <AccountManagement 
-        user={user} 
-        onBack={() => setShowAccountManagement(false)} 
-        onUserUpdate={fetchMyData} 
-        onDeleteAccount={handleDeleteAccount} 
+      <AccountManagement
+        user={user}
+        onBack={() => setShowAccountManagement(false)}
+        onUserUpdate={fetchMyData}
+        onDeleteAccount={handleDeleteAccount}
       />
     );
   }
@@ -348,31 +351,31 @@ export function MyPage({ onBack, onLogout }: MyPageProps) {
           <div className="bg-white rounded-2xl border border-gray-200 p-8">
             <h2 className="flex items-center gap-2 mb-6 text-gray-700"><Dog className="w-5 h-5" /> 반려동물 프로필</h2>
             {pets.length === 0 ? (
-                <div className="text-center py-8 text-gray-400">등록된 반려동물이 없습니다.</div>
+              <div className="text-center py-8 text-gray-400">등록된 반려동물이 없습니다.</div>
             ) : (
-                <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="grid grid-cols-2 gap-4 mb-6">
                 {pets.map((pet) => (
-                    <div key={pet.id} className="border border-gray-200 rounded-xl p-4 relative cursor-pointer hover:border-yellow-300 transition-colors" onClick={() => handlePetClick(pet.id)}>
+                  <div key={pet.id} className="border border-gray-200 rounded-xl p-4 relative cursor-pointer hover:border-yellow-300 transition-colors" onClick={() => handlePetClick(pet.id)}>
                     <div className="flex items-start justify-between mb-3">
-                        <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center"><Dog className="w-6 h-6 text-gray-500" /></div>
-                        {/* [수정] 카드 위 수정 버튼을 누르면 이벤트 전파를 막고 바로 수정창을 띄움 */}
-                        <button 
-                            className="text-gray-400 hover:text-gray-600"
-                            onClick={(e) => {
-                                e.stopPropagation(); // 카드 클릭(상세페이지 이동) 방지
-                                handlePetClick(pet.id); // 선택된 펫 설정
-                                setShowPetEdit(true);   // 수정창 열기
-                            }}
-                        >
-                            <Edit2 className="w-4 h-4" />
-                        </button>
+                      <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center"><Dog className="w-6 h-6 text-gray-500" /></div>
+                      {/* [수정] 카드 위 수정 버튼을 누르면 이벤트 전파를 막고 바로 수정창을 띄움 */}
+                      <button
+                        className="text-gray-400 hover:text-gray-600"
+                        onClick={(e) => {
+                          e.stopPropagation(); // 카드 클릭(상세페이지 이동) 방지
+                          handlePetClick(pet.id); // 선택된 펫 설정
+                          setShowPetEdit(true);  // 수정창 열기
+                        }}
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
                     </div>
                     <h3 className="mb-1">{pet.name}</h3>
                     <p className="text-sm text-gray-600 mb-1">{pet.breed}</p>
                     <div className="flex items-center gap-2 text-sm text-gray-500"><span>{pet.size}</span></div>
-                    </div>
+                  </div>
                 ))}
-                </div>
+              </div>
             )}
             <Button onClick={() => setShowAddPet(true)} variant="outline" className="w-full border-gray-300 hover:bg-gray-50">반려동물 추가하기</Button>
           </div>
@@ -384,12 +387,12 @@ export function MyPage({ onBack, onLogout }: MyPageProps) {
         </div>
       </div>
 
-      <ProfileEditDialog 
-        open={showProfileEdit} 
-        onClose={() => setShowProfileEdit(false)} 
-        currentNickname={user.nickname} 
-        profileInitial={profileInitial} 
-        onSave={handleProfileUpdate} 
+      <ProfileEditDialog
+        open={showProfileEdit}
+        onClose={() => setShowProfileEdit(false)}
+        currentNickname={user.nickname}
+        profileInitial={profileInitial}
+        onSave={handleProfileUpdate}
       />
     </div>
   );

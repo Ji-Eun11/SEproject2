@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Header } from "./components/Header";
 import { Login } from "./components/Login";
 import { Signup } from "./components/Signup";
-// [수정] 주석 해제 (아이디/비번 찾기 페이지 사용)
 import { FindAccount } from "./components/FindAccount";
 import { MyPage } from "./components/MyPage";
 import { PetForm } from "./components/PetForm";
@@ -16,43 +15,64 @@ import { Toaster } from "./components/ui/sonner";
 import { toast } from "sonner";
 import { API_BASE_URL } from "./lib/constants";
 
-type Page = "main" | "login" | "signup" | "findId" | "findPassword" | "mypage" | "addPet" | "editPet" | "search" | "placeDetail";
+type Page =
+  | "main"
+  | "login"
+  | "signup"
+  | "findId"
+  | "findPassword"
+  | "mypage"
+  | "addPet"
+  | "editPet"
+  | "search"
+  | "placeDetail";
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>("main");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [filters, setFilters] = useState<FilterState>({ amenities: [], petSizes: [], placeTypes: [] });
-  
-  const [highlightedPlaceId, setHighlightedPlaceId] = useState<number | null>(null);
+
+  const [filters, setFilters] = useState<FilterState>({
+    amenities: [],
+    petSizes: [],
+    placeTypes: [],
+  });
+
+  const [highlightedPlaceId, setHighlightedPlaceId] = useState<number | null>(
+    null
+  );
   const [selectedPlaceId, setSelectedPlaceId] = useState<number | null>(null);
+
   const [searchQuery, setSearchQuery] = useState("");
 
-  const [places, setPlaces] = useState<any[]>([]); 
+  const [places, setPlaces] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     const userId = localStorage.getItem("userId");
-    
+
     if (token && userId && userId !== "undefined") {
-        setIsLoggedIn(true);
+      setIsLoggedIn(true);
     } else {
-        localStorage.clear();
-        setIsLoggedIn(false);
+      localStorage.clear();
+      setIsLoggedIn(false);
     }
 
     const fetchPlaces = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/api/places`);
         const result = await response.json();
+
         if (result.success) {
           const mappedPlaces = result.data.map((p: any) => ({
             id: p.placeId,
             name: p.name,
-            image: p.photos && p.photos.length > 0 ? p.photos[0] : "https://images.unsplash.com/photo-1518717758536-85ae29035b6d?auto=format&fit=crop&q=80&w=1000",
+            image:
+              p.photos && p.photos.length > 0
+                ? p.photos[0]
+                : "https://images.unsplash.com/photo-1518717758536-85ae29035b6d?auto=format&fit=crop&q=80&w=1000",
             description: p.address,
             rating: p.avgRating,
             reviewCount: p.reviewCount,
@@ -62,8 +82,9 @@ export default function App() {
             address: p.address,
             phone: p.phone || "",
             hours: p.operationHours || "",
-            details: p.petPolicy || ""
+            details: p.petPolicy || "",
           }));
+
           setPlaces(mappedPlaces);
         }
       } catch (error) {
@@ -78,27 +99,25 @@ export default function App() {
 
   const handleLoginSuccess = (token: string, userOrId: any) => {
     localStorage.setItem("accessToken", token);
-    
-    let idToSave;
-    if (typeof userOrId === 'object' && userOrId !== null) {
-        idToSave = userOrId.userId; 
-    } else {
-        idToSave = userOrId; 
-    }
+
+    const idToSave =
+      typeof userOrId === "object" && userOrId !== null
+        ? userOrId.userId
+        : userOrId;
 
     if (idToSave !== undefined && idToSave !== null) {
-        localStorage.setItem("userId", idToSave.toString());
-        setIsLoggedIn(true);
-        setCurrentPage("main");
-        toast.success("로그인되었습니다!");
+      localStorage.setItem("userId", idToSave.toString());
+      setIsLoggedIn(true);
+      setCurrentPage("main");
+      toast.success("로그인되었습니다!");
     } else {
-        console.error("로그인 오류: 유저 ID를 찾을 수 없습니다.", userOrId);
-        alert("로그인 처리 중 오류가 발생했습니다. (ID 누락)");
+      console.error("로그인 오류: 유저 ID를 찾을 수 없습니다.", userOrId);
+      alert("로그인 처리 중 오류가 발생했습니다. (ID 누락)");
     }
   };
 
   const handleLogout = () => {
-    localStorage.clear(); 
+    localStorage.clear();
     setIsLoggedIn(false);
     setCurrentPage("main");
     toast.success("로그아웃되었습니다!");
@@ -121,56 +140,162 @@ export default function App() {
 
   const selectedPlace = places.find((p) => p.id === selectedPlaceId);
 
+  /* ---------------------------
+     ✨ 로고 클릭 시 홈으로 이동하도록 수정!
+  --------------------------- */
+  const handleLogoClick = () => {
+    setSearchQuery("");
+    setSelectedPlaceId(null);
+    setHighlightedPlaceId(null);
+    setShowWizard(false);
+    setShowFilter(false);
+    setCurrentPage("main");
+  };
+
   const renderPage = () => {
     switch (currentPage) {
       case "login":
-        return <Login 
-            onLogin={handleLoginSuccess} 
-            onSignup={() => setCurrentPage("signup")} 
-            // [수정] 아이디/비밀번호 찾기 페이지로 이동 연결
-            onFindAccount={(type) => setCurrentPage(type === "id" ? "findId" : "findPassword")} 
-            onBack={() => setCurrentPage("main")} 
-        />;
+        return (
+          <Login
+            onLogin={handleLoginSuccess}
+            onSignup={() => setCurrentPage("signup")}
+            onFindAccount={(type) =>
+              setCurrentPage(type === "id" ? "findId" : "findPassword")
+            }
+            onBack={() => setCurrentPage("main")}
+          />
+        );
+
       case "signup":
-        return <Signup onSignup={() => setCurrentPage("login")} onBack={() => setCurrentPage("main")} />;
-      // [추가] 아이디 찾기 페이지
+        return (
+          <Signup
+            onSignup={() => setCurrentPage("login")}
+            onBack={() => setCurrentPage("main")}
+          />
+        );
+
       case "findId":
         return <FindAccount type="id" onBack={() => setCurrentPage("login")} />;
-      // [추가] 비밀번호 찾기 페이지
+
       case "findPassword":
-        return <FindAccount type="password" onBack={() => setCurrentPage("login")} />;
+        return (
+          <FindAccount type="password" onBack={() => setCurrentPage("login")} />
+        );
+
       case "mypage":
-        return <MyPage onBack={() => setCurrentPage("main")} onLogout={handleLogout} />;
+        return (
+          <MyPage onBack={() => setCurrentPage("main")} onLogout={handleLogout} />
+        );
+
       case "placeDetail":
-        if (!selectedPlace) return <div className="p-8">장소를 찾을 수 없습니다.</div>;
-        return <PlaceDetail place={selectedPlace} isLoggedIn={isLoggedIn} onBack={() => setCurrentPage("main")} />;
+        if (!selectedPlace)
+          return <div className="p-8">장소를 찾을 수 없습니다.</div>;
+        return (
+          // selectedPlace 타입 불확실할 때 에러 방지용 any 캐스트
+          <PlaceDetail
+            place={selectedPlace as any}
+            reviews={[]} // 초기 리뷰 없다고 가정
+            isLoggedIn={isLoggedIn}
+            onBack={() => setCurrentPage("main")}
+            onAddReview={(review) => console.log("리뷰 추가:", review)}
+            onEditReview={(id, review) => console.log("리뷰 수정:", id, review)}
+            onDeleteReview={(id) => console.log("리뷰 삭제:", id)}
+          />
+        );
+
       case "search":
-        return <SearchPage places={places} initialQuery={searchQuery} onBack={() => setCurrentPage("main")} onPlaceClick={handlePlaceClick} onWizardClick={() => setShowWizard(true)} onFilterClick={() => setShowFilter(true)} isLoggedIn={isLoggedIn} onLoginClick={() => setCurrentPage("login")} onSignupClick={() => setCurrentPage("signup")} onLogoutClick={handleLogout} onMyPageClick={() => setCurrentPage("mypage")} />;
+        return (
+          <SearchPage
+            places={places}
+            initialQuery={searchQuery}
+            onBack={() => setCurrentPage("main")}
+            onPlaceClick={handlePlaceClick}
+            onWizardClick={() => setShowWizard(true)}
+            onFilterClick={() => setShowFilter(true)}
+            isLoggedIn={isLoggedIn}
+            onLoginClick={() => setCurrentPage("login")}
+            onSignupClick={() => setCurrentPage("signup")}
+            onLogoutClick={handleLogout}
+            onMyPageClick={() => setCurrentPage("mypage")}
+          />
+        );
+
       case "addPet":
-        return <PetForm onSubmit={() => {}} onBack={() => setCurrentPage("mypage")} />;
+        return (
+          <PetForm onSubmit={() => {}} onBack={() => setCurrentPage("mypage")} />
+        );
+
       case "main":
       default:
         return (
           <div className="min-h-screen bg-white">
-            <Header isLoggedIn={isLoggedIn} onLoginClick={() => setCurrentPage("login")} onSignupClick={() => setCurrentPage("signup")} onLogoutClick={handleLogout} onMyPageClick={() => setCurrentPage("mypage")} onLogoClick={() => setCurrentPage("main")} onSearchClick={handleSearchClick} onWizardClick={() => setShowWizard(true)} onFilterClick={() => setShowFilter(true)} />
+            <Header
+              isLoggedIn={isLoggedIn}
+              onLoginClick={() => setCurrentPage("login")}
+              onSignupClick={() => setCurrentPage("signup")}
+              onLogoutClick={handleLogout}
+              onMyPageClick={() => setCurrentPage("mypage")}
+              onLogoClick={handleLogoClick}
+              onSearchClick={handleSearchClick}
+              onWizardClick={() => setShowWizard(true)}
+              onFilterClick={() => setShowFilter(true)}
+            />
+
             <main className="max-w-[2520px] mx-auto px-6 lg:px-20 py-12">
-              {loading ? <div className="text-center py-20">데이터를 불러오는 중입니다...</div> : (
+              {loading ? (
+                <div className="text-center py-20">
+                  데이터를 불러오는 중입니다...
+                </div>
+              ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                   <div className="lg:col-span-2 space-y-12">
-                    {["CAFE", "OUTDOOR", "RESTAURANT", "SWIMMING"].map((category) => (
-                      <ThemeSection key={category} category={category} places={places} onPlaceClick={handlePlaceClick} onPlaceHover={setHighlightedPlaceId} />
-                    ))}
+                    {["CAFE", "OUTDOOR", "RESTAURANT", "SWIMMING"].map(
+                      (category) => (
+                        <ThemeSection
+                          key={category}
+                          category={category}
+                          places={places}
+                          onPlaceClick={handlePlaceClick}
+                          onPlaceHover={setHighlightedPlaceId}
+                        />
+                      )
+                    )}
                   </div>
-                  <div className="hidden lg:block lg:col-span-1"><div className="sticky top-24"><MapView places={places} highlightedPlaceId={highlightedPlaceId} onPlaceClick={handlePlaceClick} /></div></div>
+
+                  <div className="hidden lg:block lg:col-span-1">
+                    <div className="sticky top-24">
+                      <MapView
+                        places={places}
+                        highlightedPlaceId={highlightedPlaceId}
+                        onPlaceClick={handlePlaceClick}
+                      />
+                    </div>
+                  </div>
                 </div>
               )}
             </main>
-            <WizardDialog open={showWizard} onClose={() => setShowWizard(false)} places={places} onPlaceClick={handlePlaceClick} />
-            <FilterDialog open={showFilter} onClose={() => setShowFilter(false)} onApply={handleFilterApply} />
+
+            <WizardDialog
+              open={showWizard}
+              onClose={() => setShowWizard(false)}
+              places={places}
+              onPlaceClick={handlePlaceClick}
+            />
+
+            <FilterDialog
+              open={showFilter}
+              onClose={() => setShowFilter(false)}
+              onApply={handleFilterApply}
+            />
           </div>
         );
     }
   };
 
-  return <>{renderPage()}<Toaster /></>;
+  return (
+    <>
+      {renderPage()}
+      <Toaster />
+    </>
+  );
 }

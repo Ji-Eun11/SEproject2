@@ -1,3 +1,4 @@
+// Signup.tsx
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -11,42 +12,66 @@ interface SignupProps {
   onBack: () => void;
 }
 
+// --- [추가] 유효성 검사 헬퍼 함수 ---
+const validatePassword = (password: string): string | null => {
+  // 최소 8자 이상, 영문/숫자/특수문자 중 2가지 이상 포함
+  const regex = /^(?=.*[A-Za-z])(?=.*\d|.*[!@#$%^&*()_+={}\[\]:;"'<>,.?/\\|`~-]).{8,}$/;
+  if (!regex.test(password)) {
+    return "비밀번호는 8자 이상, 영문/숫자/특수문자 중 2가지 이상을 포함해야 합니다.";
+  }
+  return null;
+};
+
+const validatePhone = (phone: string): string | null => {
+  // 010으로 시작하는 11자리 숫자 형식 검사 (하이픈 제거 후 검사)
+  const phoneCleaned = phone.replace(/[^0-9]/g, '');
+  const regex = /^010\d{8}$/;
+  if (!regex.test(phoneCleaned)) {
+    return "전화번호 형식이 올바르지 않습니다. (예: 01012345678)";
+  }
+  return null;
+};
+// ---------------------------------
+
 export function Signup({ onSignup, onBack }: SignupProps) {
   const [formData, setFormData] = useState({
-    username: "", 
-    email: "", 
-    password: "", 
-    passwordConfirm: "", 
-    name: "", 
-    nickname: "", 
-    birthdate: "", 
-    phone: "", 
+    username: "",
+    email: "",
+    password: "",
+    passwordConfirm: "",
+    name: "",
+    nickname: "",
+    birthdate: "",
+    phone: "",
     address: "",
   });
-  
+
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  
+  // [수정: string | undefined 허용]
+  const [errors, setErrors] = useState<Record<string, string | undefined>>({});
+
   // 중복 확인 상태 관리 (true면 사용 가능, false면 미확인/중복)
-  const [checks, setChecks] = useState({ 
-    username: false, 
-    email: false, 
-    nickname: false 
+  const [checks, setChecks] = useState({
+    username: false,
+    email: false,
+    nickname: false
   });
 
   const handleChange = (field: string, value: string) => {
     setFormData({ ...formData, [field]: value });
-    // 값을 수정하면 중복 확인을 다시 해야 하므로 false로 초기화
+    // 값을 수정하면 해당 필드의 오류 상태 및 중복 확인 상태를 초기화
+    setErrors((prev) => ({ ...prev, [field]: undefined, passwordConfirm: field === 'password' ? undefined : prev.passwordConfirm }));
+
     if (field === "username" || field === "email" || field === "nickname") {
-        setChecks((prev) => ({ ...prev, [field]: false }));
+      setChecks((prev) => ({ ...prev, [field]: false }));
     }
   };
 
   // [수정] 실제 백엔드 API와 연동된 중복 확인 함수
   const handleCheckDuplicate = async (field: "username" | "email" | "nickname") => {
     const value = formData[field];
-    
+
     if (!value) {
       alert("내용을 입력해주세요.");
       return;
@@ -94,25 +119,54 @@ export function Signup({ onSignup, onBack }: SignupProps) {
   };
 
   const handleSubmit = async () => {
-    // 필수 항목 체크
-  const requiredFields = ["name", "birthdate", "phone", "address"];
-  for (const field of requiredFields) {
-    if (!formData[field]) {
-      alert(`${field === "name" ? "이름" : field === "birthdate" ? "생년월일" : field === "phone" ? "연락처" : "주소"}을 입력해주세요.`);
+    // --- [유효성 검사 및 오류 처리] ---
+    // 에러 타입도 string | undefined 로 정의
+    let newErrors: Record<string, string | undefined> = {};
+
+    // [수정: formData의 키 타입을 사용하여 타입 안정성 확보]
+    type FormDataKey = keyof typeof formData; 
+    const requiredFields: FormDataKey[] = [
+      "username", "email", "password", "passwordConfirm",
+      "name", "nickname", "birthdate", "phone", "address"
+    ];
+
+    for (const field of requiredFields) {
+      if (!formData[field].trim()) {
+        newErrors[field] = "필수 입력 항목입니다.";
+      }
+    }
+
+    // 2. 비밀번호 형식 및 확인 검사
+    const passwordError = validatePassword(formData.password);
+    if (passwordError) {
+      newErrors.password = passwordError;
+    } else if (formData.password !== formData.passwordConfirm) {
+      newErrors.passwordConfirm = "비밀번호가 일치하지 않습니다.";
+    }
+
+    // 3. 전화번호 형식 검사
+    const phoneError = validatePhone(formData.phone);
+    if (phoneError) {
+      newErrors.phone = phoneError;
+    }
+
+    // undefined는 제외하고 실제 오류 메시지가 있는 키만 필터링
+    const actualErrors = Object.keys(newErrors).filter(key => newErrors[key] !== undefined);
+
+    setErrors(newErrors);
+
+    if (actualErrors.length > 0) {
+      // [요청된 오류 메시지 출력]
+      alert("올바르지 않는 형식입니다.");
       return;
     }
-  }
+    // --- [유효성 검사 끝] ---
 
-    // 1. 비밀번호 일치 확인
-    if (formData.password !== formData.passwordConfirm) {
-      setErrors({ ...errors, passwordConfirm: "비밀번호가 일치하지 않습니다" });
+    // 4. 중복 확인 여부 체크
+    if (!checks.username || !checks.email || !checks.nickname) {
+      alert("아이디, 이메일, 닉네임 중복 확인이 필요합니다.");
       return;
     }
-
-    // 2. 중복 확인 여부 체크 (선택 사항: 강제할지 말지 결정)
-    if (!checks.username) { alert("아이디 중복 확인을 해주세요."); return; }
-    if (!checks.email) { alert("이메일 중복 확인을 해주세요."); return; }
-    if (!checks.nickname) { alert("닉네임 중복 확인을 해주세요."); return; }
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/users/signup`, {
@@ -123,12 +177,12 @@ export function Signup({ onSignup, onBack }: SignupProps) {
           email: formData.email,
           passwordRaw: formData.password,
           nickname: formData.nickname,
-          // 나머지 정보는 백엔드 User 엔티티 상황에 맞춰 전송 (현재 User 엔티티에는 name, phone 필드가 없으면 제외될 수 있음)
-          // *주의: User 엔티티에 name, phone, address 필드가 없다면 백엔드 수정이 필요할 수 있습니다.
-          // 일단 현재 백엔드 DTO(UserRegisterRequest)에는 loginId, email, passwordRaw, nickname, profileImage 만 있습니다.
-          // 추가 정보를 저장하려면 백엔드 DTO와 엔티티를 수정해야 합니다. 
-          // 여기서는 에러 방지를 위해 DTO에 있는 것만 보냅니다. (필요시 백엔드 수정 후 추가)
-          profileImage: null 
+          // 주의: 백엔드 DTO에 맞게 전송
+          name: formData.name, // 백엔드 DTO에 필드가 있다면 전송
+          phone: formData.phone, // 백엔드 DTO에 필드가 있다면 전송
+          birthdate: formData.birthdate, // 백엔드 DTO에 필드가 있다면 전송
+          address: formData.address, // 백엔드 DTO에 필드가 있다면 전송
+          profileImage: null
         }),
       });
       const result = await response.json();
@@ -155,50 +209,70 @@ export function Signup({ onSignup, onBack }: SignupProps) {
           </div>
           <div className="space-y-4">
             <div>
-                <Label>아이디 *</Label>
-                <div className="flex gap-2 mt-1">
-                    <Input value={formData.username} onChange={(e) => handleChange("username", e.target.value)} />
-                    <Button variant="outline" onClick={() => handleCheckDuplicate("username")}>중복확인</Button>
-                </div>
+              <Label>아이디 *</Label>
+              <div className="flex gap-2 mt-1">
+                <Input value={formData.username} onChange={(e) => handleChange("username", e.target.value)} />
+                <Button variant="outline" onClick={() => handleCheckDuplicate("username")}>중복확인</Button>
+              </div>
+              {errors.username && <p className="text-red-500 text-sm mt-1">{errors.username}</p>}
             </div>
             <div>
-                <Label>이메일 *</Label>
-                <div className="flex gap-2 mt-1">
-                    <Input value={formData.email} onChange={(e) => handleChange("email", e.target.value)} />
-                    <Button variant="outline" onClick={() => handleCheckDuplicate("email")}>중복확인</Button>
-                </div>
+              <Label>이메일 *</Label>
+              <div className="flex gap-2 mt-1">
+                <Input value={formData.email} onChange={(e) => handleChange("email", e.target.value)} />
+                <Button variant="outline" onClick={() => handleCheckDuplicate("email")}>중복확인</Button>
+              </div>
+              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
             </div>
             <div>
-                <Label>비밀번호 *</Label>
-                <div className="relative mt-1">
-                    <Input type={showPassword ? "text" : "password"} value={formData.password} onChange={(e) => handleChange("password", e.target.value)} />
-                    <button onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                </div>
+              <Label>비밀번호 *</Label>
+              <div className="relative mt-1">
+                <Input type={showPassword ? "text" : "password"} value={formData.password} onChange={(e) => handleChange("password", e.target.value)} />
+                <button onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
             </div>
             <div>
-                <Label>비밀번호 확인 *</Label>
-                <div className="relative mt-1">
-                    <Input type={showPasswordConfirm ? "text" : "password"} value={formData.passwordConfirm} onChange={(e) => handleChange("passwordConfirm", e.target.value)} />
-                    <button onClick={() => setShowPasswordConfirm(!showPasswordConfirm)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                        {showPasswordConfirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                </div>
-                {errors.passwordConfirm && <p className="text-sm text-red-500">{errors.passwordConfirm}</p>}
+              <Label>비밀번호 확인 *</Label>
+              <div className="relative mt-1">
+                <Input type={showPasswordConfirm ? "text" : "password"} value={formData.passwordConfirm} onChange={(e) => handleChange("passwordConfirm", e.target.value)} />
+                <button onClick={() => setShowPasswordConfirm(!showPasswordConfirm)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                  {showPasswordConfirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              {errors.passwordConfirm && <p className="text-red-500 text-sm mt-1">{errors.passwordConfirm}</p>}
             </div>
             <div>
-                <Label>닉네임 *</Label>
-                <div className="flex gap-2 mt-1">
-                    <Input value={formData.nickname} onChange={(e) => handleChange("nickname", e.target.value)} />
-                    <Button variant="outline" onClick={() => handleCheckDuplicate("nickname")}>중복확인</Button>
-                </div>
+              <Label>닉네임 *</Label>
+              <div className="flex gap-2 mt-1">
+                <Input value={formData.nickname} onChange={(e) => handleChange("nickname", e.target.value)} />
+                <Button variant="outline" onClick={() => handleCheckDuplicate("nickname")}>중복확인</Button>
+              </div>
+              {errors.nickname && <p className="text-red-500 text-sm mt-1">{errors.nickname}</p>}
             </div>
             {/* 추가 정보 필드 */}
-            <div><Label>이름</Label><Input value={formData.name} onChange={(e) => handleChange("name", e.target.value)} /></div>
-            <div><Label>생년월일</Label><Input value={formData.birthdate} onChange={(e) => handleChange("birthdate", e.target.value)} /></div>
-            <div><Label>연락처</Label><Input value={formData.phone} onChange={(e) => handleChange("phone", e.target.value)} /></div>
-            <div><Label>주소</Label><Input value={formData.address} onChange={(e) => handleChange("address", e.target.value)} /></div>
+            <div>
+              <Label>이름</Label>
+              <Input value={formData.name} onChange={(e) => handleChange("name", e.target.value)} />
+              {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+            </div>
+            <div>
+              <Label>생년월일</Label>
+              <Input value={formData.birthdate} onChange={(e) => handleChange("birthdate", e.target.value)} />
+              {errors.birthdate && <p className="text-red-500 text-sm mt-1">{errors.birthdate}</p>}
+            </div>
+            <div>
+              <Label>연락처</Label>
+              <Input value={formData.phone} onChange={(e) => handleChange("phone", e.target.value)} />
+              {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
+            </div>
+            <div>
+              <Label>주소</Label>
+              <Input value={formData.address} onChange={(e) => handleChange("address", e.target.value)} />
+              {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
+            </div>
           </div>
           <div className="flex gap-3 mt-8"><Button onClick={onBack} variant="outline" className="flex-1">취소</Button><Button onClick={handleSubmit} className="flex-1 bg-yellow-300 text-gray-900 hover:bg-yellow-400">회원가입</Button></div>
         </div>
